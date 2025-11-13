@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -39,6 +39,14 @@ async function run() {
       const corsor = cropsCollection.find();
       const result = await corsor.toArray();
       res.send(result);
+    });
+
+    // Get a single crop by ID
+    app.get("/crops/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const crop = await cropsCollection.findOne(query);
+      res.send(crop);
     });
 
     app.get("/myCrops", async (req, res) => {
