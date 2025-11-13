@@ -41,6 +41,18 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/myCrops", async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query["oner.email"] = email;
+      }
+
+      const corsor = cropsCollection.find(query);
+      const result = await corsor.toArray();
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
