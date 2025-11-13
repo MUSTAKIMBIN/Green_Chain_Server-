@@ -29,9 +29,15 @@ async function run() {
     const cropsCollection = database.collection("crops");
 
     // crops apis
-    app.post("/addCrops", async (req, res) => {
+    app.post("/crops", async (req, res) => {
       const newCrops = req.body;
       const result = await cropsCollection.insertOne(newCrops);
+      res.send(result);
+    });
+
+    app.get("/crops", async (req, res) => {
+      const corsor = cropsCollection.find();
+      const result = await corsor.toArray();
       res.send(result);
     });
 
