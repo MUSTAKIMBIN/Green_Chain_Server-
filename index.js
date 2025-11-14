@@ -49,6 +49,99 @@ async function run() {
       res.send(crop);
     });
 
+    app.patch("/crops/:cropId/interests/:interestId", async (req, res) => {
+      try {
+        const { cropId, interestId } = req.params;
+        const { status } = req.body;
+
+        // ✅ Validate input
+        if (!ObjectId.isValid(cropId) || !ObjectId.isValid(interestId)) {
+          return res.status(400).send({ message: "Invalid ID format" });
+        }
+        if (!status || !["pending", "accepted", "rejected"].includes(status)) {
+          return res.status(400).send({ message: "Invalid status value" });
+        }
+
+        // ✅ Update interest status in the specific crop
+        const result = await cropsCollection.updateOne(
+          {
+            _id: new ObjectId(cropId),
+            "interests._id": new ObjectId(interestId),
+          },
+          { $set: { "interests.$.status": status } }
+        );
+
+        if (result.modifiedCount === 0) {
+          return res
+            .status(404)
+            .send({ message: "Interest not found or already updated" });
+        }
+
+        // ✅ Return updated crop document
+        const updatedCrop = await cropsCollection.findOne({
+          _id: new ObjectId(cropId),
+        });
+
+        res.status(200).send(updatedCrop);
+      } catch (error) {
+        console.error("❌ Error updating interest:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // interested api
+
+    // POST: Add a new interest to a crop
+    app.post("/crops/:cropId/interests", async (req, res) => {
+      try {
+        const { cropId } = req.params;
+        const { userEmail, userName, quantity, message } = req.body;
+
+        // Validate ID
+        if (!ObjectId.isValid(cropId)) {
+          return res.status(400).send({ message: "Invalid Crop ID" });
+        }
+
+        // Validate required fields
+        if (!userEmail || !userName || !quantity) {
+          return res.status(400).send({ message: "Missing required fields" });
+        }
+
+        // Create unique interest _id
+        const interestId = new ObjectId();
+
+        const interest = {
+          _id: interestId,
+          cropId,
+          userEmail,
+          userName,
+          quantity,
+          message,
+          status: "pending",
+        };
+
+        // Push interest into crop
+        const updateResult = await cropsCollection.updateOne(
+          { _id: new ObjectId(cropId) },
+          { $push: { interests: interest } }
+        );
+
+        if (updateResult.modifiedCount === 0) {
+          return res.status(404).send({ message: "Crop not found" });
+        }
+
+        // Return updated crop to frontend
+        const updatedCrop = await cropsCollection.findOne({
+          _id: new ObjectId(cropId),
+        });
+
+        res.status(201).send(updatedCrop);
+      } catch (error) {
+        console.error("❌ Error creating interest:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
     app.get("/myCrops", async (req, res) => {
       const email = req.query.email;
       const query = {};
