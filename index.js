@@ -1,18 +1,18 @@
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+// require("dotenv").config();
+const dotenv = require("dotenv");
 const app = express();
+dotenv.config();
 const port = process.env.PORT || 3000;
 
 // middlewere
 app.use(cors());
 app.use(express.json());
-// CVqbHVCx84e5KqKy
-// GreenChain
 
 // mongodb uri
-const uri =
-  "mongodb+srv://GreenChain:CVqbHVCx84e5KqKy@cluster0.96upm.mongodb.net/?appName=Cluster0";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.96upm.mongodb.net/?appName=Cluster0`;
 // mongobd client
 const client = new MongoClient(uri, {
   serverApi: {
