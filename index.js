@@ -153,6 +153,38 @@ async function run() {
       const result = await corsor.toArray();
       res.send(result);
     });
+    // GET: Get all interests sent by a user
+    app.get("/myInterests", async (req, res) => {
+      try {
+        const userEmail = req.query.email; // read email from query
+        if (!userEmail)
+          return res.status(400).send({ message: "Missing user email" });
+
+        const cursor = cropsCollection.find({
+          "interests.userEmail": userEmail,
+        });
+        const crops = await cursor.toArray();
+
+        const userInterests = crops.flatMap((crop) =>
+          crop.interests
+            .filter((interest) => interest.userEmail === userEmail)
+            .map((interest) => ({
+              _id: interest._id,
+              cropId: crop._id,
+              cropName: crop.name,
+              ownerName: crop.oner?.name || "Unknown",
+              quantity: interest.quantity,
+              message: interest.message,
+              status: interest.status,
+            }))
+        );
+
+        res.status(200).send(userInterests);
+      } catch (error) {
+        console.error("❌ Error fetching user interests:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
